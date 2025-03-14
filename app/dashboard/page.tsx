@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { VisitsChart } from "@/components/visits-chart"
 import { RequestsTable } from "@/components/requests-table"
 import { StatsChart } from "@/components/stats-chart"
 import { GET_VISITS } from "@/services/dashboard.servise"
 import { WHOAMI } from "@/services/login.service"
 import { AnnouncementCard } from "@/components/announcement-card"
+import { VisitsChart } from "@/components/visits-chart";
 export const fetchME = async () => {
   await WHOAMI()
 }
