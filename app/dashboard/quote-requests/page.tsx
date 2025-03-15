@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {
   MoreHorizontal,
   Trash2,
@@ -12,13 +12,34 @@ import {
   MessageSquare,
   X,
   FileText,
-} from "lucide-react"
-import { GET_QUOTE_REQUESTS, DELETE_QUOTE_REQUEST } from "@/services/quote-request.service"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
+} from "lucide-react";
+import {
+  GET_QUOTE_REQUESTS,
+  DELETE_QUOTE_REQUEST,
+} from "@/services/quote-request.service";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -26,184 +47,194 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { toast } from "@/components/ui/use-toast"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Updated interface to match the actual API response
 interface IQuoteRequest {
-  id: number
-  name: string
-  email: string
-  phoneNumber?: string
-  message: string
-  quoteType: "EDU" | "TRAVEL" // Changed from 'type' to 'quoteType' to match API
-  requestType: string
-  createdAt: string
-  updatedAt: string
+  id: number;
+  name: string;
+  email: string;
+  phoneNumber?: string;
+  message: string;
+  quoteType: "EDU" | "TRAVEL"; // Changed from 'type' to 'quoteType' to match API
+  service: {
+    id: number;
+    title: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function QuoteRequestsPage() {
-  const [requests, setRequests] = useState<IQuoteRequest[]>([])
-  const [filteredRequests, setFilteredRequests] = useState<IQuoteRequest[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedRequest, setSelectedRequest] = useState<IQuoteRequest | null>(null)
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("all")
+  const [requests, setRequests] = useState<IQuoteRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<IQuoteRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState<IQuoteRequest | null>(
+    null
+  );
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof IQuoteRequest | null
-    direction: "ascending" | "descending"
-  }>({ key: "createdAt", direction: "descending" })
+    key: keyof IQuoteRequest | null;
+    direction: "ascending" | "descending";
+  }>({ key: "createdAt", direction: "descending" });
 
   useEffect(() => {
-    fetchQuoteRequests()
-  }, [])
+    fetchQuoteRequests();
+  }, []);
 
   useEffect(() => {
     // Ensure requests is an array before filtering
     if (!Array.isArray(requests)) {
-      setFilteredRequests([])
-      return
+      setFilteredRequests([]);
+      return;
     }
 
     // Apply filtering and sorting
-    let result = [...requests]
+    let result = [...requests];
 
     // Filter by type based on active tab
     if (activeTab !== "all") {
       result = result.filter((request) =>
-        activeTab === "edu" ? request.quoteType === "EDU" : request.quoteType === "TRAVEL",
-      )
+        activeTab === "edu"
+          ? request.quoteType === "EDU"
+          : request.quoteType === "TRAVEL"
+      );
     }
 
     // Apply search filter
     if (searchTerm) {
-      const term = searchTerm.toLowerCase()
+      const term = searchTerm.toLowerCase();
       result = result.filter(
         (request) =>
           request.name.toLowerCase().includes(term) ||
           request.email.toLowerCase().includes(term) ||
-          (request.phoneNumber && request.phoneNumber.toLowerCase().includes(term)) ||
+          (request.phoneNumber &&
+            request.phoneNumber.toLowerCase().includes(term)) ||
           request.message.toLowerCase().includes(term) ||
-          request.requestType.toLowerCase().includes(term),
-      )
+          request.service.title.toLowerCase().includes(term)
+      );
     }
 
     // Apply sorting
     if (sortConfig.key) {
       result.sort((a, b) => {
-        if (a[sortConfig.key!] < b[sortConfig.key!]) {
-          return sortConfig.direction === "ascending" ? -1 : 1
+        const key = sortConfig.key as keyof IQuoteRequest;
+        const aVal = a[key] ?? "";
+        const bVal = b[key] ?? "";
+
+        if (aVal < bVal) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
         }
-        if (a[sortConfig.key!] > b[sortConfig.key!]) {
-          return sortConfig.direction === "ascending" ? 1 : -1
+        if (aVal > bVal) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
         }
-        return 0
-      })
+        return 0;
+      });
     }
 
-    setFilteredRequests(result)
-  }, [requests, searchTerm, activeTab, sortConfig])
+    setFilteredRequests(result);
+  }, [requests, searchTerm, activeTab, sortConfig]);
 
   const fetchQuoteRequests = async () => {
     try {
-      setLoading(true)
-      const response = await GET_QUOTE_REQUESTS()
+      setLoading(true);
+      const response = await GET_QUOTE_REQUESTS();
 
       // Extract the quoteRequests array from the response
       if (response && response.data) {
-        if (response.data.quoteRequests && Array.isArray(response.data.quoteRequests)) {
+        if (
+          response.data.quoteRequests &&
+          Array.isArray(response.data.quoteRequests)
+        ) {
           // This is the correct path based on the error message
-          setRequests(response.data.quoteRequests)
+          setRequests(response.data.quoteRequests);
         } else if (Array.isArray(response.data)) {
           // Fallback if the API returns a direct array
-          setRequests(response.data)
+          setRequests(response.data);
         } else {
-          console.error("Unexpected response format:", response.data)
-          setRequests([])
+          console.error("Unexpected response format:", response.data);
+          setRequests([]);
         }
       } else {
-        setRequests([])
+        setRequests([]);
       }
     } catch (error) {
-      console.error("Failed to fetch quote requests", error)
-      setRequests([])
+      console.error("Failed to fetch quote requests", error);
+      setRequests([]);
       toast({
         title: "Error",
         description: "Failed to load quote requests. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleDelete = async (id: number) => {
     try {
-      await DELETE_QUOTE_REQUEST(id)
-      setRequests(requests.filter((request) => request.id !== id))
+      await DELETE_QUOTE_REQUEST(id);
+      setRequests(requests.filter((request) => request.id !== id));
       toast({
         title: "Request deleted",
         description: "The quote request has been successfully deleted.",
-      })
+      });
     } catch (error) {
-      console.error("Failed to delete quote request", error)
+      console.error("Failed to delete quote request", error);
       toast({
         title: "Error",
         description: "Failed to delete quote request. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsDeleteDialogOpen(false)
+      setIsDeleteDialogOpen(false);
     }
-  }
+  };
 
   const handleViewDetails = (request: IQuoteRequest) => {
-    setSelectedRequest(request)
-    setIsDetailsOpen(true)
-  }
+    setSelectedRequest(request);
+    setIsDetailsOpen(true);
+  };
 
   const handleConfirmDelete = (request: IQuoteRequest) => {
-    setSelectedRequest(request)
-    setIsDeleteDialogOpen(true)
-  }
+    setSelectedRequest(request);
+    setIsDeleteDialogOpen(true);
+  };
 
   const handleSort = (key: keyof IQuoteRequest) => {
-    let direction: "ascending" | "descending" = "ascending"
+    let direction: "ascending" | "descending" = "ascending";
 
     if (sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending"
+      direction = "descending";
     }
 
-    setSortConfig({ key, direction })
-  }
-
-  const formatRequestType = (type: string) => {
-    return type
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ")
-  }
+    setSortConfig({ key, direction });
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(date)
-  }
+    }).format(date);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Quote Requests</h1>
-        <p className="text-muted-foreground">Manage and respond to customer quote requests</p>
+        <p className="text-muted-foreground">
+          Manage and respond to customer quote requests
+        </p>
       </div>
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -242,7 +273,8 @@ export default function QuoteRequestsPage() {
         <CardHeader className="pb-2">
           <CardTitle>Quote Requests</CardTitle>
           <CardDescription>
-            {filteredRequests.length} {filteredRequests.length === 1 ? "request" : "requests"} found
+            {filteredRequests.length}{" "}
+            {filteredRequests.length === 1 ? "request" : "requests"} found
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -258,8 +290,8 @@ export default function QuoteRequestsPage() {
                 {searchTerm
                   ? "Try adjusting your search terms"
                   : activeTab !== "all"
-                    ? `No ${activeTab} quote requests available`
-                    : "No quote requests have been submitted yet"}
+                  ? `No ${activeTab} quote requests available`
+                  : "No quote requests have been submitted yet"}
               </p>
             </div>
           ) : (
@@ -268,10 +300,17 @@ export default function QuoteRequestsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px]">
-                      <Button variant="ghost" size="sm" className="font-medium -ml-4" onClick={() => handleSort("id")}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="font-medium -ml-4"
+                        onClick={() => handleSort("id")}
+                      >
                         ID
                         {sortConfig.key === "id" && (
-                          <span className="ml-1">{sortConfig.direction === "ascending" ? "↑" : "↓"}</span>
+                          <span className="ml-1">
+                            {sortConfig.direction === "ascending" ? "↑" : "↓"}
+                          </span>
                         )}
                       </Button>
                     </TableHead>
@@ -284,12 +323,14 @@ export default function QuoteRequestsPage() {
                       >
                         Name
                         {sortConfig.key === "name" && (
-                          <span className="ml-1">{sortConfig.direction === "ascending" ? "↑" : "↓"}</span>
+                          <span className="ml-1">
+                            {sortConfig.direction === "ascending" ? "↑" : "↓"}
+                          </span>
                         )}
                       </Button>
                     </TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Request Type</TableHead>
+                    <TableHead>Request for</TableHead>
                     <TableHead>
                       <Button
                         variant="ghost"
@@ -299,7 +340,9 @@ export default function QuoteRequestsPage() {
                       >
                         Date
                         {sortConfig.key === "createdAt" && (
-                          <span className="ml-1">{sortConfig.direction === "ascending" ? "↑" : "↓"}</span>
+                          <span className="ml-1">
+                            {sortConfig.direction === "ascending" ? "↑" : "↓"}
+                          </span>
                         )}
                       </Button>
                     </TableHead>
@@ -313,18 +356,33 @@ export default function QuoteRequestsPage() {
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleViewDetails(request)}
                     >
-                      <TableCell className="font-medium">{request.id}</TableCell>
+                      <TableCell className="font-medium">
+                        {request.id}
+                      </TableCell>
                       <TableCell>{request.name}</TableCell>
                       <TableCell>
-                        <Badge variant={request.quoteType === "EDU" ? "default" : "secondary"}>
+                        <Badge
+                          variant={
+                            request.quoteType === "EDU"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
                           {request.quoteType === "EDU" ? "Education" : "Travel"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate">{formatRequestType(request.requestType)}</TableCell>
-                      <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {request.service.title}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(request.createdAt).toLocaleDateString()}
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuTrigger
+                            asChild
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Button variant="ghost" size="icon">
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Actions</span>
@@ -333,8 +391,8 @@ export default function QuoteRequestsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={(e) => {
-                                e.stopPropagation()
-                                handleViewDetails(request)
+                                e.stopPropagation();
+                                handleViewDetails(request);
                               }}
                             >
                               <FileText className="mr-2 h-4 w-4" />
@@ -343,8 +401,8 @@ export default function QuoteRequestsPage() {
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={(e) => {
-                                e.stopPropagation()
-                                handleConfirmDelete(request)
+                                e.stopPropagation();
+                                handleConfirmDelete(request);
                               }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -374,10 +432,17 @@ export default function QuoteRequestsPage() {
           {selectedRequest && (
             <div className="grid gap-4 py-4">
               <div className="flex justify-between items-start">
-                <Badge variant={selectedRequest.quoteType === "EDU" ? "default" : "secondary"} className="mb-4">
+                <Badge
+                  variant={
+                    selectedRequest.quoteType === "EDU"
+                      ? "default"
+                      : "secondary"
+                  }
+                  className="mb-4"
+                >
                   {selectedRequest.quoteType === "EDU" ? "Education" : "Travel"}
                 </Badge>
-                <Badge variant="outline">{formatRequestType(selectedRequest.requestType)}</Badge>
+                <Badge variant="outline">{selectedRequest.service.title}</Badge>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -386,7 +451,9 @@ export default function QuoteRequestsPage() {
                     <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                     Submitted on
                   </p>
-                  <p className="text-sm">{formatDate(selectedRequest.createdAt)}</p>
+                  <p className="text-sm">
+                    {formatDate(selectedRequest.createdAt)}
+                  </p>
                 </div>
 
                 <div className="space-y-1">
@@ -394,7 +461,9 @@ export default function QuoteRequestsPage() {
                     <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                     Last updated
                   </p>
-                  <p className="text-sm">{formatDate(selectedRequest.updatedAt)}</p>
+                  <p className="text-sm">
+                    {formatDate(selectedRequest.updatedAt)}
+                  </p>
                 </div>
               </div>
 
@@ -421,7 +490,9 @@ export default function QuoteRequestsPage() {
                   <MessageSquare className="mr-2 h-4 w-4 text-muted-foreground" />
                   Message
                 </p>
-                <div className="rounded-md border p-4 text-sm whitespace-pre-wrap">{selectedRequest.message}</div>
+                <div className="rounded-md border p-4 text-sm whitespace-pre-wrap">
+                  {selectedRequest.message}
+                </div>
               </div>
             </div>
           )}
@@ -432,8 +503,8 @@ export default function QuoteRequestsPage() {
             <Button
               variant="destructive"
               onClick={() => {
-                setIsDetailsOpen(false)
-                handleConfirmDelete(selectedRequest!)
+                setIsDetailsOpen(false);
+                handleConfirmDelete(selectedRequest!);
               }}
             >
               Delete Request
@@ -448,21 +519,28 @@ export default function QuoteRequestsPage() {
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this quote request from {selectedRequest?.name}? This action cannot be
-              undone.
+              Are you sure you want to delete this quote request from{" "}
+              {selectedRequest?.name}? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={() => selectedRequest && handleDelete(selectedRequest.id)}>
+            <Button
+              variant="destructive"
+              onClick={() =>
+                selectedRequest && handleDelete(selectedRequest.id)
+              }
+            >
               Delete
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
-
