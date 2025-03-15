@@ -158,7 +158,6 @@ export const VisitsChart: React.FC<VisitsChartProps> = ({ data }) => {
 
   // If no real data or processing failed, use sample data
   if (chartData.length === 0) {
-    console.log(chartData);
     chartData = [{ visitsCount: 0, date: "" }];
   }
 

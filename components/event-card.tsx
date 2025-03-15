@@ -36,8 +36,6 @@ const getEvent = async () => {
 }
 
 const updateEvent = async (id: number, field: string, value: any) => {
-  // Simulate API call
-  console.log(`Updating event ${id}, field: ${field}, value:`, value)
   return { success: true }
 }
 
@@ -119,7 +117,6 @@ export function EventCard() {
         updateValue = JSON.stringify(updatedEvent.institutionBenefits)
       }
 
-      console.log("Updating:", updateField, updateValue)
 
       await Promise.all([UPDATE_EVENT_FIELD(updateField, updateValue), updateEvent(event.id, updateField, updateValue)])
 
@@ -213,7 +210,6 @@ export function EventCard() {
       }
 
       updateValue = JSON.stringify(updateValue)
-      console.log("Adding Field:", updateField, updateValue)
 
       await UPDATE_EVENT_FIELD(updateField, updateValue)
       await updateEvent(event.id, updateField, updateValue)

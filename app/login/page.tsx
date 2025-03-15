@@ -22,7 +22,6 @@ export default function LoginPage() {
   useEffect(() => {
     const fetchME = async () => {
       const { data, status } = await WHOAMI()
-      console.log(data, status)
       if (status === 200) {
         redirect("/dashboard")
       }
@@ -42,7 +41,6 @@ export default function LoginPage() {
 
     try {
       const { data, status } = await LOGIN({ username, password })
-      console.log(data)
       if (status === 201) {
         localStorage.setItem("access-token", data.accessToken)
         localStorage.setItem("refresh-token", data.refreshToken)
